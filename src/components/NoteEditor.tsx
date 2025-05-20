@@ -42,6 +42,7 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("edit");
+  const isNewNote = !noteId;
 
   useEffect(() => {
     if (user) {
@@ -135,7 +136,7 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
     
     setIsLoading(true);
     try {
-      let noteId;
+      let savedNoteId = noteId;
       
       if (noteId) {
         // Update existing note
@@ -164,21 +165,21 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
         
         if (error) throw error;
         
-        noteId = data[0].id;
+        savedNoteId = data[0].id;
       }
       
       // Handle tags
-      if (noteId) {
+      if (savedNoteId) {
         // First remove all existing tags
         await supabase
           .from("note_tags")
           .delete()
-          .eq("note_id", noteId);
+          .eq("note_id", savedNoteId);
         
         // Then add new tags
         if (selectedTags.length > 0) {
           const tagLinks = selectedTags.map(tag => ({
-            note_id: noteId,
+            note_id: savedNoteId,
             tag_id: tag.id
           }));
           
@@ -196,8 +197,8 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
       });
       
       // Navigate back to note view or notes list
-      if (noteId) {
-        navigate(`/note/${noteId}`);
+      if (savedNoteId) {
+        navigate(`/note/${savedNoteId}`);
       } else {
         navigate("/");
       }
