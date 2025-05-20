@@ -6,7 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import Layout from "@/components/Layout";
+import NotesPage from "@/pages/NotesPage";
+import NoteDetailPage from "@/pages/NoteDetailPage";
+import NoteEditPage from "@/pages/NoteEditPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -24,10 +27,19 @@ const App = () => (
               path="/"
               element={
                 <ProtectedRoute>
-                  <Index />
+                  <Layout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<NotesPage />} />
+              <Route path="/favorites" element={<NotesPage />} />
+              <Route path="/folder/:folderId" element={<NotesPage />} />
+              <Route path="/tag/:tagId" element={<NotesPage />} />
+              <Route path="/search" element={<NotesPage />} />
+              <Route path="/note/:noteId" element={<NoteDetailPage />} />
+              <Route path="/new" element={<NoteEditPage />} />
+              <Route path="/edit/:noteId" element={<NoteEditPage />} />
+            </Route>
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
