@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
@@ -28,9 +27,10 @@ type Tag = {
 
 interface NoteEditorProps {
   noteId?: string;
+  isDumpNote?: boolean;
 }
 
-const NoteEditor = ({ noteId }: NoteEditorProps) => {
+const NoteEditor = ({ noteId, isDumpNote = false }: NoteEditorProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
@@ -145,7 +145,7 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
           .update({
             title,
             content,
-            folder_id: selectedFolder,
+            folder_id: isDumpNote ? null : selectedFolder,
             updated_at: new Date().toISOString()
           })
           .eq("id", noteId);
@@ -159,7 +159,7 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
             title,
             content,
             user_id: user?.id,
-            folder_id: selectedFolder
+            folder_id: isDumpNote ? null : selectedFolder
           }])
           .select();
         
@@ -168,8 +168,8 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
         savedNoteId = data[0].id;
       }
       
-      // Handle tags
-      if (savedNoteId) {
+      // Handle tags only if not a dump note
+      if (savedNoteId && !isDumpNote) {
         // First remove all existing tags
         await supabase
           .from("note_tags")
@@ -202,6 +202,49 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
       } else {
         navigate("/");
       }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createDumpNote = async () => {
+    if (!title.trim()) {
+      toast({
+        title: "Error",
+        description: "Title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Create new dump note with no folder or tags
+      const { data, error } = await supabase
+        .from("notes")
+        .insert([{
+          title,
+          content,
+          user_id: user?.id,
+          folder_id: null
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Dump note created successfully"
+      });
+      
+      // Navigate back to dump notes view
+      navigate("/dump");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -276,62 +319,73 @@ const NoteEditor = ({ noteId }: NoteEditorProps) => {
               <Trash className="h-4 w-4 text-destructive" />
             </Button>
           )}
-          <Button 
-            onClick={saveNote}
-            disabled={isLoading}
-          >
-            <Save className="mr-2 h-4 w-4" /> Save
-          </Button>
+          {isDumpNote ? (
+            <Button 
+              onClick={createDumpNote}
+              disabled={isLoading}
+            >
+              <Save className="mr-2 h-4 w-4" /> Save as Dump Note
+            </Button>
+          ) : (
+            <Button 
+              onClick={saveNote}
+              disabled={isLoading}
+            >
+              <Save className="mr-2 h-4 w-4" /> Save
+            </Button>
+          )}
         </div>
       </div>
       
-      <div className="border-b p-4">
-        <div className="flex flex-wrap gap-2 mb-2">
-          <div className="flex-shrink-0">
-            <Select value={selectedFolder || ''} onValueChange={setSelectedFolder}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select folder" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">No folder</SelectItem>
-                {folders.map(folder => (
-                  <SelectItem key={folder.id} value={folder.id}>{folder.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {!isDumpNote && (
+        <div className="border-b p-4">
+          <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex-shrink-0">
+              <Select value={selectedFolder || ''} onValueChange={setSelectedFolder}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select folder" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No folder</SelectItem>
+                  {folders.map(folder => (
+                    <SelectItem key={folder.id} value={folder.id}>{folder.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex-grow">
+              <Select value={tagToAdd} onValueChange={addTag}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Add tags" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tags
+                    .filter(tag => !selectedTags.some(t => t.id === tag.id))
+                    .map(tag => (
+                      <SelectItem key={tag.id} value={tag.id}>{tag.name}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <div className="flex-grow">
-            <Select value={tagToAdd} onValueChange={addTag}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Add tags" />
-              </SelectTrigger>
-              <SelectContent>
-                {tags
-                  .filter(tag => !selectedTags.some(t => t.id === tag.id))
-                  .map(tag => (
-                    <SelectItem key={tag.id} value={tag.id}>{tag.name}</SelectItem>
-                  ))
-                }
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap gap-1 mt-2">
+            {selectedTags.map(tag => (
+              <Badge key={tag.id} variant="secondary" className="flex items-center gap-1">
+                {tag.name}
+                <button 
+                  onClick={() => removeTag(tag.id)} 
+                  className="ml-1 h-3 w-3 rounded-full"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
           </div>
         </div>
-        
-        <div className="flex flex-wrap gap-1 mt-2">
-          {selectedTags.map(tag => (
-            <Badge key={tag.id} variant="secondary" className="flex items-center gap-1">
-              {tag.name}
-              <button 
-                onClick={() => removeTag(tag.id)} 
-                className="ml-1 h-3 w-3 rounded-full"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
+      )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
         <TabsList className="mx-4 mt-4 justify-start">

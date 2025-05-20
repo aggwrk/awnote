@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,12 +26,13 @@ const NotesPage = () => {
   const [title, setTitle] = useState("All Notes");
 
   const isFavorites = location.pathname === "/favorites";
+  const isDumpNotes = location.pathname === "/dump";
 
   useEffect(() => {
     if (user) {
       fetchNotes();
     }
-  }, [user, folderId, tagId, isFavorites, searchQuery]);
+  }, [user, folderId, tagId, isFavorites, isDumpNotes, searchQuery]);
 
   useEffect(() => {
     // Set the page title based on the current view
@@ -42,12 +42,14 @@ const NotesPage = () => {
       fetchTagName(tagId);
     } else if (isFavorites) {
       setTitle("Favorite Notes");
+    } else if (isDumpNotes) {
+      setTitle("Dump Notes");
     } else if (searchQuery) {
       setTitle(`Search results for "${searchQuery}"`);
     } else {
       setTitle("All Notes");
     }
-  }, [folderId, tagId, isFavorites, searchQuery]);
+  }, [folderId, tagId, isFavorites, isDumpNotes, searchQuery]);
 
   const fetchFolderName = async (id: string) => {
     try {
@@ -107,6 +109,22 @@ const NotesPage = () => {
       
       if (isFavorites) {
         query = query.eq("is_favorite", true);
+      }
+
+      if (isDumpNotes) {
+        // Dump notes have no folder and no tags
+        query = query.is("folder_id", null);
+        
+        // Get all notes with tags
+        const { data: notesWithTags } = await supabase
+          .from("note_tags")
+          .select("note_id");
+        
+        // If we have notes with tags, exclude them from dump notes
+        if (notesWithTags && notesWithTags.length > 0) {
+          const noteIdsWithTags = notesWithTags.map(item => item.note_id);
+          query = query.not("id", "in", `(${noteIdsWithTags.join(',')})`);
+        }
       }
       
       if (searchQuery) {

@@ -10,6 +10,7 @@ import Layout from "@/components/Layout";
 import NotesPage from "@/pages/NotesPage";
 import NoteDetailPage from "@/pages/NoteDetailPage";
 import NoteEditPage from "@/pages/NoteEditPage";
+import DumpNotePage from "@/pages/DumpNotePage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,8 @@ const App = () => (
               <Route path="/folder/:folderId" element={<NotesPage />} />
               <Route path="/tag/:tagId" element={<NotesPage />} />
               <Route path="/search" element={<NotesPage />} />
+              <Route path="/dump" element={<NotesPage />} />
+              <Route path="/new-dump" element={<DumpNotePage />} />
               <Route path="/note/:noteId" element={<NoteDetailPage />} />
               <Route path="/new" element={<NoteEditPage />} />
               <Route path="/edit/:noteId" element={<NoteEditPage />} />
