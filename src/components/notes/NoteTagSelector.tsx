@@ -28,7 +28,7 @@ const NoteTagSelector = ({
   return (
     <>
       <div className="flex-grow">
-        <Select value={tagToAdd} onValueChange={addTag}>
+        <Select value={tagToAdd || undefined} onValueChange={addTag}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Add tags" />
           </SelectTrigger>

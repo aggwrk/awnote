@@ -14,12 +14,12 @@ interface NoteFolderSelectProps {
 
 const NoteFolderSelect = ({ folders, selectedFolder, setSelectedFolder }: NoteFolderSelectProps) => {
   return (
-    <Select value={selectedFolder || ''} onValueChange={setSelectedFolder}>
+    <Select value={selectedFolder || undefined} onValueChange={setSelectedFolder}>
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="Select folder" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">No folder</SelectItem>
+        <SelectItem value="none">No folder</SelectItem>
         {folders.map(folder => (
           <SelectItem key={folder.id} value={folder.id}>{folder.name}</SelectItem>
         ))}

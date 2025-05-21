@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +82,9 @@ export const useNote = (noteId?: string, isDumpNote: boolean = false) => {
     try {
       let savedNoteId = noteId;
       
+      // Convert "none" folder selection to null
+      const folderIdToSave = selectedFolder === "none" ? null : selectedFolder;
+      
       if (noteId) {
         // Update existing note
         const { error } = await supabase
@@ -90,7 +92,7 @@ export const useNote = (noteId?: string, isDumpNote: boolean = false) => {
           .update({
             title,
             content,
-            folder_id: isDumpNote ? null : selectedFolder,
+            folder_id: isDumpNote ? null : folderIdToSave,
             updated_at: new Date().toISOString()
           })
           .eq("id", noteId);
@@ -104,7 +106,7 @@ export const useNote = (noteId?: string, isDumpNote: boolean = false) => {
             title,
             content,
             user_id: user?.id,
-            folder_id: isDumpNote ? null : selectedFolder
+            folder_id: isDumpNote ? null : folderIdToSave
           }])
           .select();
         
