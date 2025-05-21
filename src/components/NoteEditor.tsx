@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useNoteFolders } from "@/hooks/useNoteFolders";
 import { useNoteTags } from "@/hooks/useNoteTags";
 import { useNote } from "@/hooks/useNote";
 import MarkdownEditor from "./notes/MarkdownEditor";
 import NoteFolderSelect from "./notes/NoteFolderSelect";
 import NoteTagSelector from "./notes/NoteTagSelector";
+import NoteEditorToolbar from "./notes/NoteEditorToolbar";
 
 interface NoteEditorProps {
   noteId?: string;
@@ -69,28 +70,18 @@ const NoteEditor = ({ noteId, isDumpNote = false }: NoteEditorProps) => {
               <Trash className="h-4 w-4 text-destructive" />
             </Button>
           )}
-          {isDumpNote ? (
-            <Button 
-              onClick={createDumpNote}
-              disabled={isLoading}
-            >
-              <Save className="mr-2 h-4 w-4" /> Save as Dump Note
-            </Button>
-          ) : (
-            <Button 
-              onClick={saveNote}
-              disabled={isLoading}
-            >
-              <Save className="mr-2 h-4 w-4" /> Save
-            </Button>
-          )}
+          <NoteEditorToolbar 
+            isLoading={isLoading}
+            onSave={isDumpNote ? createDumpNote : saveNote}
+          />
         </div>
       </div>
       
       {!isDumpNote && (
-        <div className="border-b p-4">
-          <div className="flex flex-wrap gap-2 mb-2">
-            <div className="flex-shrink-0">
+        <div className="border-b p-4 bg-gray-50">
+          <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
+            <div className="w-full md:w-1/3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Folder</label>
               <NoteFolderSelect 
                 folders={folders} 
                 selectedFolder={selectedFolder} 
@@ -98,19 +89,24 @@ const NoteEditor = ({ noteId, isDumpNote = false }: NoteEditorProps) => {
               />
             </div>
             
-            <NoteTagSelector
-              tags={tags}
-              selectedTags={selectedTags}
-              tagToAdd={tagToAdd}
-              setTagToAdd={setTagToAdd}
-              addTag={addTag}
-              removeTag={removeTag}
-            />
+            <div className="w-full md:w-2/3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+              <NoteTagSelector
+                tags={tags}
+                selectedTags={selectedTags}
+                tagToAdd={tagToAdd}
+                setTagToAdd={setTagToAdd}
+                addTag={addTag}
+                removeTag={removeTag}
+              />
+            </div>
           </div>
         </div>
       )}
       
-      <MarkdownEditor content={content} setContent={setContent} />
+      <div className="flex-grow">
+        <MarkdownEditor content={content} setContent={setContent} />
+      </div>
     </div>
   );
 };
